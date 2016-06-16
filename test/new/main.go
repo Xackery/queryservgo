@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	scm := &packet.ServerChannelMessage{
+	/*scm := &packet.ServerChannelMessage{
 		DeliverTo: "asaoisdjsaodiajsodijasodij",
 		To:        "b",
 		From:      "c",
@@ -19,13 +19,23 @@ func main() {
 		Language:  5,
 		Queued:    6,
 		Message:   "",
+	}*/
+
+	tm := &packet.ServerPacket{
+		OpCode: queryserv.ServerOP_Speech,
 	}
+	bData, err := tm.Encode()
+	if err != nil {
+		fmt.Println("Error encoding tm", err.Error())
+		return
+	}
+	fmt.Println(bData)
 
 	qs := &queryserv.QueryServ{}
-	err := qs.Connect()
+	err = qs.Connect()
 	if err != nil {
 		fmt.Println("Error connecting:", err.Error())
 		return
 	}
-	qs.SendPacket(scm, 1)
+	//qs.SendPacket(scm, 1)
 }

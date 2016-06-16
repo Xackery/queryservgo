@@ -60,7 +60,7 @@ func (q *QueryServ) Connect() (err error) {
 	data := make([]byte, 1500)
 
 	q.conn.Read(data) //When auth starts there's always a single echo back that can be discarded..
-	pErr := q.Process()
+	pErr := q.process()
 	if err != nil {
 		pErr = fmt.Errorf("Error during process: %s")
 	}
@@ -79,8 +79,34 @@ func (q *QueryServ) Connect() (err error) {
 	return
 }
 
-func (q *QueryServ) Process() (err error) {
-	//dec := gob.NewDecoder(q.conn)
+func (q *QueryServ) SendPacket(data packet.Packet, destination int) (err error) {
+	sp := &packet.ServerPacket{}
+
+	switch data.(type) {
+	case *packet.ServerChannelMessage:
+		//sm.Opcode = ServerOP_ChannelMessage
+	default:
+		err = fmt.Errorf("Unknown packet request type:", data)
+		return
+	}
+	//	sp.Buffer, err = data.Encode()
+	if err != nil {
+		return
+	}
+	//fmt.Println(bBuffer)
+	//sm.Buffer = string(bBuffer)
+
+	buffer, err := sp.Encode()
+	if err != nil {
+		fmt.Println("error making scm", err.Error())
+		return
+	}
+	fmt.Println(buffer)
+	return
+}
+
+func (q *QueryServ) process() (err error) {
+
 	buf := bufio.NewReader(q.conn)
 	for q.IsConnected {
 		data := make([]byte, 1024)
@@ -99,53 +125,14 @@ func (q *QueryServ) Process() (err error) {
 			fmt.Println("Error encoding", err.Error())
 			continue
 		}
+
 		err = q.recievePacket(sp)
 		if err != nil {
-			fmt.Printf("Error decoding server packet, Opcode: %#x: %s\n", sp.Opcode, err.Error())
+			fmt.Printf("Error decoding server packet, Opcode: %#x: %s\n", sp.OpCode, err.Error())
+			fmt.Println(data)
 			continue
 		}
-
-		/*
-			err = dec.Decode(sp)
-			fmt.Printf("Got packet: %+v\n", sp)
-			if err != nil {
-				//fmt.Printf("Size: %u, Opcode: %#x, Buffer: %s\n\n", sp.Size, sp.Opcode, sp.Buffer)
-				//fmt.Printf("%#X - %s\n", packet, string(packet))
-				continue
-			}
-
-
-				fmt.Printf("Error receiving packet: %s", err.Error())
-				continue
-			}
-		*/
 	}
-	return
-}
-
-func (q *QueryServ) SendPacket(data packet.Packet, destination int) (err error) {
-	sp := &packet.ServerPacket{}
-
-	switch data.(type) {
-	case *packet.ServerChannelMessage:
-		//sm.Opcode = ServerOP_ChannelMessage
-	default:
-		err = fmt.Errorf("Unknown packet request type:", data)
-		return
-	}
-	sp.Buffer, err = data.Encode()
-	if err != nil {
-		return
-	}
-	//fmt.Println(bBuffer)
-	//sm.Buffer = string(bBuffer)
-
-	buffer, err := sp.Encode()
-	if err != nil {
-		fmt.Println("error making scm", err.Error())
-		return
-	}
-	fmt.Println(buffer)
 	return
 }
 
@@ -154,7 +141,9 @@ func (q *QueryServ) recievePacket(sp *packet.ServerPacket) (err error) {
 		err = fmt.Errorf("Empty packet")
 		return
 	}
-	switch sp.Opcode {
+
+	//fmt.Printf("%#x\n", sp.OpCode)
+	switch sp.OpCode {
 	case 0x00:
 		//fmt.Println("Ignoring 0 pad (this is an echo of PING is my theory, 07000000000000")
 		return
@@ -168,7 +157,8 @@ func (q *QueryServ) recievePacket(sp *packet.ServerPacket) (err error) {
 		speech.Message = strings.Trim(speech.Message, "\x00")
 		fmt.Printf("Status: %i, From: %s, To: %s, Message: %s, Type: %i, Misc: %v\n", speech.MinStatus, speech.From, speech.To, speech.Message, speech.Type, speech)*/
 	default:
-		fmt.Printf("Unknown Packet Found. Size: %u, Opcode: %#x, Buffer: %s\n\n", sp.Size, sp.Opcode, sp.Buffer)
+		err = fmt.Errorf("Unknown Packet Found. Size: %u, Opcode: %#x, Buffer: %s\n\n", sp.Size, sp.OpCode, sp.Buffer)
+		return
 	}
 	return
 }

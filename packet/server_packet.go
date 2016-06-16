@@ -8,10 +8,10 @@ import (
 )
 
 type ServerPacket struct {
-	Size uint32 `struc:"uint32,little,sizeof=Buffer"` //uint32 size
-	//precode [1]byte `struc:"[1]pad"`                      //this is an odd padding issue
-	Opcode uint16 `struc:"uint16,little"` //uint16 opcode
-	Buffer []byte
+	Size    uint32  `struc:"uint32,little,sizeof=Buffer"` //uint32 size
+	Precode [1]byte `struc:"[1]pad"`                      //this is an odd padding issue
+	OpCode  uint16  `struc:"uint16,little"`               //uint16 opcode
+	Buffer  []byte
 	//Wpos         uint32 `struc:"uint32,little"` //uint32 _wpos
 	//Rpos         uint32 `struc:"uint32,little"` //uint32 _rpos
 	//Compressed   bool   `struc:"bool,little"`   //bool   compressed
@@ -33,7 +33,7 @@ func (s *ServerPacket) Sanitize() {
 
 func (s *ServerPacket) Encode() (packet []byte, err error) {
 	s.Sanitize()
-	s.Size = (uint32)(len(s.Buffer))
+	//s.Size = len(s.Buffer)
 
 	var buf *bytes.Buffer
 	buf = bytes.NewBuffer(make([]byte, 1024))
@@ -55,7 +55,6 @@ func (s *ServerPacket) Encode() (packet []byte, err error) {
 func (s *ServerPacket) Decode(packet []byte) (err error) {
 	var buf *bytes.Buffer
 	buf = bytes.NewBuffer(packet)
-	fmt.Println(packet)
 	err = struc.Unpack(buf, s)
 	return
 }
