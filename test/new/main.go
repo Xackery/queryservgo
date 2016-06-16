@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/xackery/queryservgo/packet"
 	"github.com/xackery/queryservgo/queryserv"
 )
@@ -21,5 +22,10 @@ func main() {
 	}
 
 	qs := &queryserv.QueryServ{}
+	err := qs.Connect()
+	if err != nil {
+		fmt.Println("Error connecting:", err.Error())
+		return
+	}
 	qs.SendPacket(scm, 1)
 }
