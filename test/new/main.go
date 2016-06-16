@@ -11,7 +11,7 @@ var qs *queryserv.QueryServ
 
 func main() {
 	var err error
-	scm := &packet.ServerChannelMessage{
+	/*scm := &packet.ServerChannelMessage{
 		//DeliverTo: "",
 		//To:        "",
 		From:      "Xuluu_[ShinTwo]",
@@ -22,13 +22,14 @@ func main() {
 		Language:  0,
 		Queued:    0,
 		Message:   "TTEESSTTTEST",
-	}
+	}*/
+	scm := &packet.ServerWhoAll{}
 
 	qs = &queryserv.QueryServ{}
 	go connectLoop()
 
 	time.Sleep(1 * time.Second)
-	fmt.Println("Sending ServerChannelMessage")
+	fmt.Println("Sending WhoAll")
 	err = qs.SendPacket(scm, 2)
 	if err != nil {
 		fmt.Println("Error sending packet", err.Error())

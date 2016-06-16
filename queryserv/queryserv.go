@@ -92,6 +92,8 @@ func (q *QueryServ) SendPacket(data packet.Packet, destination int) (err error) 
 	case *packet.ServerChannelMessage:
 		sp.OpCode = ServerOP_ChannelMessage
 		sp.Compressed = true
+	case *packet.ServerWhoAll:
+		sp.OpCode = ServerOP_WhoAll
 	default:
 		err = fmt.Errorf("Unknown packet request type:", data)
 		return
@@ -103,7 +105,7 @@ func (q *QueryServ) SendPacket(data packet.Packet, destination int) (err error) 
 		return
 	}
 
-	fmt.Printf("%#x\n", sp.Buffer)
+	//fmt.Printf("%#x\n", sp.Buffer)
 	//fmt.Println("/\\ uncompressed")
 
 	if sp.Compressed {
@@ -125,8 +127,9 @@ func (q *QueryServ) SendPacket(data packet.Packet, destination int) (err error) 
 		return
 	}
 
-	fmt.Println(spData)
+	//fmt.Println(spData)
 
+	fmt.Printf("%#x\n", spData)
 	//fmt.Println(spData)
 	//_, err = q.conn.Write(buffer)
 	if err != nil {
