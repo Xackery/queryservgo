@@ -149,13 +149,21 @@ func (q *QueryServ) recievePacket(sp *packet.ServerPacket) (err error) {
 		return
 	case ServerOP_Speech:
 		fmt.Println("Speech", sp.Buffer)
-		/*speech := &ServerSpeech{}
-		buf = bytes.NewBufferString(sp.Buffer)
-		err = struc.Unpack(buf, speech)
-		speech.From = strings.Trim(speech.From, "\x00")
-		speech.To = strings.Trim(speech.To, "\x00")
-		speech.Message = strings.Trim(speech.Message, "\x00")
-		fmt.Printf("Status: %i, From: %s, To: %s, Message: %s, Type: %i, Misc: %v\n", speech.MinStatus, speech.From, speech.To, speech.Message, speech.Type, speech)*/
+
+		speech := &packet.ServerSpeech{}
+		err = speech.Decode(sp.Buffer)
+		if err != nil {
+			err = fmt.Errorf("Error decoding speech: %s", err.Error())
+			return
+		}
+		fmt.Println(speech)
+		/*
+			buf = bytes.NewBufferString(sp.Buffer)
+			err = struc.Unpack(buf, speech)
+			speech.From = strings.Trim(speech.From, "\x00")
+			speech.To = strings.Trim(speech.To, "\x00")
+			speech.Message = strings.Trim(speech.Message, "\x00")
+			fmt.Printf("Status: %i, From: %s, To: %s, Message: %s, Type: %i, Misc: %v\n", speech.MinStatus, speech.From, speech.To, speech.Message, speech.Type, speech)*/
 	default:
 		err = fmt.Errorf("Unknown Packet Found. Size: %u, Opcode: %#x, Buffer: %s\n\n", sp.Size, sp.OpCode, sp.Buffer)
 		return
