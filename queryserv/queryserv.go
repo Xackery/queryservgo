@@ -1,10 +1,11 @@
 package queryserv
 
 import (
-	"encoding/gob"
+	"bufio"
 	"fmt"
 	"github.com/xackery/eqemuconfig"
 	"github.com/xackery/queryservgo/packet"
+	"io"
 	"net"
 )
 
@@ -79,25 +80,45 @@ func (q *QueryServ) Connect() (err error) {
 }
 
 func (q *QueryServ) Process() (err error) {
-
+	//dec := gob.NewDecoder(q.conn)
+	buf := bufio.NewReader(q.conn)
 	for q.IsConnected {
-
+		data := make([]byte, 1024)
 		sp := &packet.ServerPacket{}
-		dec := gob.NewDecoder(q.conn)
-
-		err = dec.Decode(sp)
-		fmt.Printf("Got packet: %+v\n", sp)
+		_, err = buf.Read(data)
 		if err != nil {
-			fmt.Printf("Error decoding server packet, Opcode: %#x: %s\n", sp.Opcode, err.Error())
-			//fmt.Printf("Size: %u, Opcode: %#x, Buffer: %s\n\n", sp.Size, sp.Opcode, sp.Buffer)
-			//fmt.Printf("%#X - %s\n", packet, string(packet))
+			if err == io.EOF {
+				continue
+			}
+			fmt.Println("Error deciphering", err.Error())
+			return
+		}
+
+		err = sp.Decode(data)
+		if err != nil {
+			fmt.Println("Error encoding", err.Error())
 			continue
 		}
 		err = q.recievePacket(sp)
 		if err != nil {
-			fmt.Printf("Error receiving packet: %s", err.Error())
+			fmt.Printf("Error decoding server packet, Opcode: %#x: %s\n", sp.Opcode, err.Error())
 			continue
 		}
+
+		/*
+			err = dec.Decode(sp)
+			fmt.Printf("Got packet: %+v\n", sp)
+			if err != nil {
+				//fmt.Printf("Size: %u, Opcode: %#x, Buffer: %s\n\n", sp.Size, sp.Opcode, sp.Buffer)
+				//fmt.Printf("%#X - %s\n", packet, string(packet))
+				continue
+			}
+
+
+				fmt.Printf("Error receiving packet: %s", err.Error())
+				continue
+			}
+		*/
 	}
 	return
 }
@@ -135,7 +156,8 @@ func (q *QueryServ) recievePacket(sp *packet.ServerPacket) (err error) {
 	}
 	switch sp.Opcode {
 	case 0x00:
-		fmt.Println("Ignoring 0 pad (this is an echo of PING is my theory, 07000000000000")
+		//fmt.Println("Ignoring 0 pad (this is an echo of PING is my theory, 07000000000000")
+		return
 	case ServerOP_Speech:
 		fmt.Println("Speech", sp.Buffer)
 		/*speech := &ServerSpeech{}
