@@ -22,3 +22,5 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+eqemu_config.xml
