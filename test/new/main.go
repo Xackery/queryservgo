@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+
 	scm := &packet.ServerChannelMessage{
 		DeliverTo: "asaoisdjsaodiajsodijasodij",
 		To:        "b",
