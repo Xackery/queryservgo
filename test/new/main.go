@@ -4,38 +4,46 @@ import (
 	"fmt"
 	"github.com/xackery/queryservgo/packet"
 	"github.com/xackery/queryservgo/queryserv"
+	"time"
 )
 
+var qs *queryserv.QueryServ
+
 func main() {
-
-	/*scm := &packet.ServerChannelMessage{
-		DeliverTo: "asaoisdjsaodiajsodijasodij",
-		To:        "b",
-		From:      "c",
-		FromAdmin: 1,
+	var err error
+	scm := &packet.ServerChannelMessage{
+		//DeliverTo: "",
+		//To:        "",
+		From:      "Xuluu_[ShinTwo]",
+		FromAdmin: 0,
 		NoReply:   true,
-		ChanNum:   3,
-		GuildDBId: 4,
-		Language:  5,
-		Queued:    6,
-		Message:   "",
-	}*/
+		ChanNum:   5,
+		GuildDBId: 0,
+		Language:  0,
+		Queued:    0,
+		Message:   "TTEESSTTTEST",
+	}
 
-	tm := &packet.ServerPacket{
-		OpCode: queryserv.ServerOP_Speech,
-	}
-	bData, err := tm.Encode()
-	if err != nil {
-		fmt.Println("Error encoding tm", err.Error())
-		return
-	}
-	fmt.Println(bData)
+	qs = &queryserv.QueryServ{}
+	go connectLoop()
 
-	qs := &queryserv.QueryServ{}
-	err = qs.Connect()
+	time.Sleep(1 * time.Second)
+	fmt.Println("Sending ServerChannelMessage")
+	err = qs.SendPacket(scm, 2)
 	if err != nil {
-		fmt.Println("Error connecting:", err.Error())
-		return
+		fmt.Println("Error sending packet", err.Error())
 	}
-	//qs.SendPacket(scm, 1)
+
+	select {}
+}
+
+func connectLoop() {
+	var err error
+	for {
+		err = qs.Connect()
+		if err != nil {
+			fmt.Println("Error with connect:", err.Error())
+			return
+		}
+	}
 }

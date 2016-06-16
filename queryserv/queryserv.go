@@ -2,6 +2,8 @@ package queryserv
 
 import (
 	"bufio"
+	"bytes"
+	"compress/zlib"
 	"fmt"
 	"github.com/xackery/eqemuconfig"
 	"github.com/xackery/queryservgo/packet"
@@ -80,28 +82,57 @@ func (q *QueryServ) Connect() (err error) {
 }
 
 func (q *QueryServ) SendPacket(data packet.Packet, destination int) (err error) {
+	if !q.IsConnected {
+		err = fmt.Errorf("Not connected")
+		return
+	}
 	sp := &packet.ServerPacket{}
 
 	switch data.(type) {
 	case *packet.ServerChannelMessage:
-		//sm.Opcode = ServerOP_ChannelMessage
+		sp.OpCode = ServerOP_ChannelMessage
+		sp.Compressed = true
 	default:
 		err = fmt.Errorf("Unknown packet request type:", data)
 		return
 	}
-	//	sp.Buffer, err = data.Encode()
+
+	sp.Buffer, err = data.Encode()
 	if err != nil {
+		err = fmt.Errorf("Error encoding buffer: %s", err.Error())
 		return
 	}
-	//fmt.Println(bBuffer)
-	//sm.Buffer = string(bBuffer)
 
-	buffer, err := sp.Encode()
+	fmt.Printf("%#x\n", sp.Buffer)
+	//fmt.Println("/\\ uncompressed")
+
+	if sp.Compressed {
+		sp.InflatedSize = len(sp.Buffer)
+		var b bytes.Buffer
+		w := zlib.NewWriter(&b)
+		w.Write(sp.Buffer)
+		w.Close()
+
+		sp.Buffer, err = b.ReadBytes(0)
+		fmt.Printf("%#x", sp.Buffer)
+		fmt.Println("/\\ compressed")
+		//io.ReadFull(bufio.NewReader(b), buffer)
+	}
+
+	spData, err := sp.Encode()
 	if err != nil {
 		fmt.Println("error making scm", err.Error())
 		return
 	}
-	fmt.Println(buffer)
+
+	fmt.Println(spData)
+
+	//fmt.Println(spData)
+	//_, err = q.conn.Write(buffer)
+	if err != nil {
+		fmt.Errorf("Error writing: %s", err.Error())
+		return
+	}
 	return
 }
 
@@ -157,13 +188,15 @@ func (q *QueryServ) recievePacket(sp *packet.ServerPacket) (err error) {
 			return
 		}
 		fmt.Println(speech)
-		/*
-			buf = bytes.NewBufferString(sp.Buffer)
-			err = struc.Unpack(buf, speech)
-			speech.From = strings.Trim(speech.From, "\x00")
-			speech.To = strings.Trim(speech.To, "\x00")
-			speech.Message = strings.Trim(speech.Message, "\x00")
-			fmt.Printf("Status: %i, From: %s, To: %s, Message: %s, Type: %i, Misc: %v\n", speech.MinStatus, speech.From, speech.To, speech.Message, speech.Type, speech)*/
+	/*
+		buf = bytes.NewBufferString(sp.Buffer)
+		err = struc.Unpack(buf, speech)
+		speech.From = strings.Trim(speech.From, "\x00")
+		speech.To = strings.Trim(speech.To, "\x00")
+		speech.Message = strings.Trim(speech.Message, "\x00")
+		fmt.Printf("Status: %i, From: %s, To: %s, Message: %s, Type: %i, Misc: %v\n", speech.MinStatus, speech.From, speech.To, speech.Message, speech.Type, speech)*/
+	case ServerOP_QueryServGeneric:
+		fmt.Println("Found a queryServ generic, ignoring for now")
 	default:
 		err = fmt.Errorf("Unknown Packet Found. Size: %u, Opcode: %#x, Buffer: %s\n\n", sp.Size, sp.OpCode, sp.Buffer)
 		return

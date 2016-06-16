@@ -8,15 +8,15 @@ import (
 )
 
 type ServerPacket struct {
-	Size    uint32  `struc:"uint32,little,sizeof=Buffer"` //uint32 size
-	Precode [1]byte `struc:"[1]pad"`                      //this is an odd padding issue
-	OpCode  uint16  `struc:"uint16,little"`               //uint16 opcode
-	Buffer  []byte
-	//Wpos         uint32 `struc:"uint32,little"` //uint32 _wpos
-	//Rpos         uint32 `struc:"uint32,little"` //uint32 _rpos
-	//Compressed   bool   `struc:"bool,little"`   //bool   compressed
-	//InflatedSize uint32 `struc:"uint32,little"` //uint32 InflatedSize
-	//Destination  uint32 `struc:"uint32,little"` //uint32 destination*/
+	Size         uint32  `struc:"uint32,little,sizeof=Buffer"` //uint32 size
+	Precode      [1]byte `struc:"[1]pad"`                      //this is an odd padding issue
+	OpCode       uint16  `struc:"uint16,little"`               //uint16 opcode
+	Buffer       []byte
+	Wpos         uint32 `struc:"uint32,little"` //uint32 _wpos
+	Rpos         uint32 `struc:"uint32,little"` //uint32 _rpos
+	Compressed   bool   `struc:"bool,little"`   //bool   compressed
+	InflatedSize int    `struc:"uint32,little"` //uint32 InflatedSize
+	Destination  int    `struc:"uint32,little"` //uint32 destination*/
 }
 
 func (s *ServerPacket) Sanitize() {
@@ -36,7 +36,9 @@ func (s *ServerPacket) Encode() (packet []byte, err error) {
 	//s.Size = len(s.Buffer)
 
 	var buf *bytes.Buffer
-	buf = bytes.NewBuffer(make([]byte, 1024))
+	fmt.Println(len(s.Buffer))
+	buf = bytes.NewBuffer(make([]byte, len(s.Buffer)+8))
+
 	err = struc.Pack(buf, s)
 	if err != nil {
 		err = fmt.Errorf("Error packing payload: %s", err.Error())
